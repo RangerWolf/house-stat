@@ -11,6 +11,7 @@ import org.jsoup.nodes.Document;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
 
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
@@ -112,6 +113,27 @@ public class NJHouseProcessor implements PageProcessor{
 		Map<String, String> map2 = supplySummaryParser(page, css, replacedStrs, keys, "/");
 		map.putAll(map2);
 		
+		//其中住宅可售套数/面积
+		css="body > table:nth-child(11) > tbody > tr >"
+				+ " td:nth-child(2) > table >"
+				+ " tbody > tr:nth-child(2) > td:nth-child(1)";
+		replacedStrs = new String[]{
+				"其中住宅可售套数/面积：","万M2","    "
+		};
+		keys = "全市其中住宅可售套数,全市其中住宅可售面积".split(",");
+		Map<String,String> map3 = supplySummaryParser(page,css,replacedStrs,keys,"/");
+		map.putAll(map3);
+		
+		//非住宅可售套数/面积
+		css="body > table:nth-child(11) > tbody > tr >"
+				+ " td:nth-child(2) > table > tbody > "
+				+ "tr:nth-child(2) > td:nth-child(2)";
+		replacedStrs = new String[]{
+				"非住宅可售套数/面积：","万M2","    "
+		};
+		keys = "全市非住宅可售套数,全市非住宅可售面积".split(",");
+		Map<String,String> map4 = supplySummaryParser(page,css,replacedStrs,keys,"/");
+		map.putAll(map4);
 		
 		// 还有其他几项还没有写进来
 		// 其中住宅可售套数/面积 , 非住宅可售套数/面积 , etc
@@ -122,16 +144,19 @@ public class NJHouseProcessor implements PageProcessor{
 	
 	public void process(Page page) {
 //		// 获取楼盘供应情况
-//		processSupplySummary(page);
+		processSupplySummary(page);
 		
 		// 头部走马灯的简要信息
 		processSimpleSummary(page);
+	
+		
 	}
 	
 	public static void main(String[] args) {
 		Spider.create(new NJHouseProcessor())
 		.addUrl("http://www.njhouse.com.cn/index_tongji.php")
 		.thread(1).run();
-	}
+		
+		}
 
 }
