@@ -11,7 +11,6 @@ import org.jsoup.nodes.Document;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.gson.Gson;
 
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
