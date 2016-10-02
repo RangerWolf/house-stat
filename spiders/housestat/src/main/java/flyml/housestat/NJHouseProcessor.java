@@ -113,8 +113,8 @@ public class NJHouseProcessor implements PageProcessor{
 		Map<String, String> map2 = supplySummaryParser(page, css, replacedStrs, keys, "/");
 		map.putAll(map2);
 		
-		//其中住宅可售套数/面积
-		css="body > table:nth-child(11) > tbody > tr >"
+		// 其中住宅可售套数/面积
+		css = "body > table:nth-child(11) > tbody > tr >"
 				+ " td:nth-child(2) > table >"
 				+ " tbody > tr:nth-child(2) > td:nth-child(1)";
 		replacedStrs = new String[]{
@@ -124,8 +124,8 @@ public class NJHouseProcessor implements PageProcessor{
 		Map<String,String> map3 = supplySummaryParser(page,css,replacedStrs,keys,"/");
 		map.putAll(map3);
 		
-		//非住宅可售套数/面积
-		css="body > table:nth-child(11) > tbody > tr >"
+		// 非住宅可售套数/面积
+		css = "body > table:nth-child(11) > tbody > tr >"
 				+ " td:nth-child(2) > table > tbody > "
 				+ "tr:nth-child(2) > td:nth-child(2)";
 		replacedStrs = new String[]{
@@ -135,15 +135,34 @@ public class NJHouseProcessor implements PageProcessor{
 		Map<String,String> map4 = supplySummaryParser(page,css,replacedStrs,keys,"/");
 		map.putAll(map4);
 		
-		// 还有其他几项还没有写进来
-		// 其中住宅可售套数/面积 , 非住宅可售套数/面积 , etc
+		// 本年上市住宅套数/面积
+		css = "body > table:nth-child(11) > tbody > tr"
+				+ " > td:nth-child(2) > table > tbody >"
+				+ " tr:nth-child(3) > td:nth-child(1)";
+		replacedStrs = new String[]{
+				"本年上市住宅套数/面积：","万M2","    "
+		};
+		keys = "全市本年上市住宅套数,全市本年上市住宅面积".split(",");
+		Map<String,String> map5 = supplySummaryParser(page,css,replacedStrs,keys,"/");
+		map.putAll(map5);
+		
+	    // 本月上市住宅套数/面积
+  		css = "body > table:nth-child(11) > tbody > tr"
+  				+ " > td:nth-child(2) > table > tbody > "
+  				+ "tr:nth-child(3) > td:nth-child(2)";
+  		replacedStrs = new String[]{
+  				"本月上市住宅套数/面积：","万M2","    "
+  		};
+  		keys = "全市本月上市住宅套数,全市本月上市住宅面积".split(",");
+  		Map<String,String> map6 = supplySummaryParser(page,css,replacedStrs,keys,"/");
+  		map.putAll(map6);
 		
 		return map;
 	}
 	
 	
 	public void process(Page page) {
-//		// 获取楼盘供应情况
+		// 获取楼盘供应情况
 		processSupplySummary(page);
 		
 		// 头部走马灯的简要信息
