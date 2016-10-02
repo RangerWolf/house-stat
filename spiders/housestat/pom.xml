@@ -15,7 +15,7 @@
 	</properties>
 	
 	<build>
-		<finalName>support</finalName>
+		<finalName>house_stat</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>

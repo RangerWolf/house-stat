@@ -195,7 +195,7 @@ public class NJHouseProcessor implements PageProcessor{
 	
 	
 	private void startDB() {
-		druidPlugin = new DruidPlugin("jdbc:mysql://127.0.0.1/flyml_webdata?characterEncoding=utf-8", "root", "");
+		druidPlugin = new DruidPlugin("jdbc:mysql://127.0.0.1/flyml_house_stat?characterEncoding=utf-8", "root", "");
         druidPlugin.start();
         activeRecordPlugin = new ActiveRecordPlugin(druidPlugin);
         activeRecordPlugin.addMapping("njhouse_simple_summary", NJHouseSimpleSummary.class);
