@@ -11,12 +11,15 @@ import org.jsoup.nodes.Document;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.gson.Gson;
 import com.jfinal.plugin.activerecord.ActiveRecordPlugin;
+import com.jfinal.plugin.activerecord.Db;
 import com.jfinal.plugin.c3p0.C3p0Plugin;
 import com.jfinal.plugin.druid.DruidPlugin;
 
 import flyml.housestat.models.NJHouseSimpleSummary;
 import flyml.housestat.models.NJHouseSupplySummary;
+import flyml.housestat.models.NJHouseYearlyStat;
 import us.codecraft.webmagic.Page;
 import us.codecraft.webmagic.Site;
 import us.codecraft.webmagic.Spider;
@@ -177,29 +180,105 @@ public class NJHouseProcessor implements PageProcessor{
 		return map;
 	}
 	
+	/**
+	 * 处理首页的统计信息
+	 * @param page
+	 * @return
+	 */
+	private Map<String, Object> processIndex(Page page) {
+		return null;
+	}
 	
 	public void process(Page page) {
-		// 获取楼盘供应情况
+		String curUrl = page.getUrl().get();
 		try {
-			Map<String, Object> supplySummaryData = processSupplySummary(page);
-			NJHouseSupplySummary.dao.put(supplySummaryData).save();
+			// ------------------------
+			// 获取统计信息
+			// ------------------------
+			if(curUrl.endsWith("index_tongji.php")) {
+				// 获取楼盘供应情况
+				Map<String, Object> supplySummaryData = processSupplySummary(page);
+				NJHouseSupplySummary.dao.put(supplySummaryData).save();
+				
+				// 头部走马灯的简要信息
+				Map<String, Object> simpleSummaryData = processSimpleSummary(page);
+				NJHouseSimpleSummary.dao.put(simpleSummaryData).save();
+			} 
+			
+			// ------------------------
+			// 本年【住宅类】交易数据公示
+			// ------------------------
+			else if(curUrl.endsWith("index.php")) {
+				Map<String, Object> indexData = processIndex(page);
+				
+				// 获取各个区的名称
+				// 全市,玄武,秦淮,建邺,鼓楼,栖霞,雨花台,江宁,六合,浦口,溧水,高淳
+				List<String> tmpList = page.getHtml().css("body > table:nth-child(21) > "
+						+ "tbody > tr > td > table:nth-child(2) > "
+						+ "tbody > tr > td:nth-child(1) > table td").all();
+				// 去除标签与多余的空格
+				List<String> districtNameList = Lists.newArrayList();
+				for(String name : tmpList) {
+					String tmp = Jsoup.parse(name).text().trim();
+					tmp = tmp.replace(" ", "");
+					if(StringUtils.isNotBlank(tmp))
+						districtNameList.add(tmp);
+				}
+				
+				// 获取【住宅->商品房】成交信息
+				tmpList = page.getHtml().css("body > table:nth-child(21) >"
+						+ " tbody > tr > td > table:nth-child(2) > tbody >"
+						+ " tr > td:nth-child(2) > table td").all();
+				List<Integer> valueList = Lists.newArrayList();
+				for(String name : tmpList.subList(3, tmpList.size())) {
+					String tmp = Jsoup.parse(name).text().trim();
+					tmp = tmp.replace(" ", "");
+					if(StringUtils.isBlank(tmp)) {
+						valueList.add(0);
+					}else {
+						valueList.add(Integer.parseInt(tmp));
+					}
+				}
+				
+				// 开始组织成Model存放到DB之中
+				List<NJHouseYearlyStat> statList = Lists.newArrayList();
+				for(int i = 0; i < valueList.size();i++) {
+					NJHouseYearlyStat stat = new NJHouseYearlyStat();
+					stat.set("update_time", new Date());
+					stat.set("district", districtNameList.get(i / 2));
+					stat.set("category", "住宅");
+					stat.set("type", "商品房");
+					if(i % 2 == 0) 
+						stat.set("column", "可售（套）");
+					else 
+						stat.set("column", "成交（套）");
+					stat.set("value", valueList.get(i));
+					statList.add(stat);
+				}
+				System.out.println("batch size:" + statList.size());
+				Db.batchSave(statList, statList.size());
+				
+				
+			}
+			
 		} catch(Exception e) {
 			e.printStackTrace();
 		}
 		
 		
-		// 头部走马灯的简要信息
-		Map<String, Object> simpleSummaryData = processSimpleSummary(page);
-		NJHouseSimpleSummary.dao.put(simpleSummaryData).save();
+		
 	}
 	
 	
 	private void startDB() {
-		druidPlugin = new DruidPlugin("jdbc:mysql://127.0.0.1/flyml_house_stat?characterEncoding=utf-8", "root", "");
+		druidPlugin = new DruidPlugin(
+				"jdbc:mysql://10.64.34.44/flyml_house_stat?characterEncoding=utf-8", 
+				"skyaiduser", "skyaid8.6");
         druidPlugin.start();
         activeRecordPlugin = new ActiveRecordPlugin(druidPlugin);
         activeRecordPlugin.addMapping("njhouse_simple_summary", NJHouseSimpleSummary.class);
         activeRecordPlugin.addMapping("njhouse_supply_summary", NJHouseSupplySummary.class);
+        activeRecordPlugin.addMapping("njhouse_yearly_deal_stat", NJHouseYearlyStat.class);
         activeRecordPlugin.start();
 	}
 	
@@ -215,7 +294,9 @@ public class NJHouseProcessor implements PageProcessor{
 		
 		processor.startDB();
 		Spider.create(processor)
-			.addUrl("http://www.njhouse.com.cn/index_tongji.php")
+			.addUrl(new String[]{
+//					"http://www.njhouse.com.cn/index_tongji.php",
+					"http://www.njhouse.com.cn/index.php"})
 			.thread(1)
 			.run();
 		processor.stopDB();
