@@ -185,7 +185,39 @@ public class NJHouseProcessor implements PageProcessor{
 	 * @param page
 	 * @return
 	 */
-	private Map<String, Object> processIndex(Page page) {
+	private Map<String, Object> processIndex(Page page, String css, List<String> districtNameList,
+			String category, String type, String[] columns) {
+		// 获取【住宅->商品房】成交信息
+		List<String> tmpList = page.getHtml().css(css).all();
+		tmpList = tmpList.subList(3, tmpList.size()); // 因为前3个空格是
+		List<Integer> valueList = Lists.newArrayList();
+		for(String name : tmpList) {
+			String tmp = Jsoup.parse(name).text().trim();
+			tmp = tmp.replace(" ", "");
+			if(StringUtils.isBlank(tmp)) {
+				valueList.add(0);
+			}else {
+				valueList.add(Integer.parseInt(tmp));
+			}
+		}
+		
+		// 开始组织成Model存放到DB之中
+		List<NJHouseYearlyStat> statList = Lists.newArrayList();
+		for(int i = 0; i < valueList.size();i++) {
+			NJHouseYearlyStat stat = new NJHouseYearlyStat();
+			stat.set("update_time", new Date());
+			stat.set("district", districtNameList.get(i / 2));
+			stat.set("category", category);
+			stat.set("type", type);
+			if(i % 2 == 0) 
+				stat.set("column", columns[0]);
+			else 
+				stat.set("column", columns[1]);
+			stat.set("value", valueList.get(i));
+			statList.add(stat);
+		}
+		System.out.println("batch size:" + statList.size());
+		Db.batchSave(statList, statList.size());
 		return null;
 	}
 	
@@ -209,8 +241,6 @@ public class NJHouseProcessor implements PageProcessor{
 			// 本年【住宅类】交易数据公示
 			// ------------------------
 			else if(curUrl.endsWith("index.php")) {
-				Map<String, Object> indexData = processIndex(page);
-				
 				// 获取各个区的名称
 				// 全市,玄武,秦淮,建邺,鼓楼,栖霞,雨花台,江宁,六合,浦口,溧水,高淳
 				List<String> tmpList = page.getHtml().css("body > table:nth-child(21) > "
@@ -226,37 +256,13 @@ public class NJHouseProcessor implements PageProcessor{
 				}
 				
 				// 获取【住宅->商品房】成交信息
-				tmpList = page.getHtml().css("body > table:nth-child(21) >"
+				String css = "body > table:nth-child(21) >"
 						+ " tbody > tr > td > table:nth-child(2) > tbody >"
-						+ " tr > td:nth-child(2) > table td").all();
-				List<Integer> valueList = Lists.newArrayList();
-				for(String name : tmpList.subList(3, tmpList.size())) {
-					String tmp = Jsoup.parse(name).text().trim();
-					tmp = tmp.replace(" ", "");
-					if(StringUtils.isBlank(tmp)) {
-						valueList.add(0);
-					}else {
-						valueList.add(Integer.parseInt(tmp));
-					}
-				}
-				
-				// 开始组织成Model存放到DB之中
-				List<NJHouseYearlyStat> statList = Lists.newArrayList();
-				for(int i = 0; i < valueList.size();i++) {
-					NJHouseYearlyStat stat = new NJHouseYearlyStat();
-					stat.set("update_time", new Date());
-					stat.set("district", districtNameList.get(i / 2));
-					stat.set("category", "住宅");
-					stat.set("type", "商品房");
-					if(i % 2 == 0) 
-						stat.set("column", "可售（套）");
-					else 
-						stat.set("column", "成交（套）");
-					stat.set("value", valueList.get(i));
-					statList.add(stat);
-				}
-				System.out.println("batch size:" + statList.size());
-				Db.batchSave(statList, statList.size());
+						+ " tr > td:nth-child(2) > table td";
+				String category = "住宅";
+				String type = "商品房";
+				String[] columns = new String[]{"可售（套）", "成交（套）"};
+				processIndex(page, css, districtNameList, category, type, columns);
 				
 				
 			}
@@ -295,7 +301,7 @@ public class NJHouseProcessor implements PageProcessor{
 		processor.startDB();
 		Spider.create(processor)
 			.addUrl(new String[]{
-//					"http://www.njhouse.com.cn/index_tongji.php",
+					"http://www.njhouse.com.cn/index_tongji.php",
 					"http://www.njhouse.com.cn/index.php"})
 			.thread(1)
 			.run();
