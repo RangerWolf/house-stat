@@ -1,16 +1,16 @@
 /*
 Navicat MySQL Data Transfer
 
-Source Server         : LocalMySQL
-Source Server Version : 50709
-Source Host           : localhost:3306
-Source Database       : flyml_webdata
+Source Server         : SkyAid-Dev
+Source Server Version : 50628
+Source Host           : 10.64.34.44:3306
+Source Database       : flyml_house_stat
 
 Target Server Type    : MYSQL
-Target Server Version : 50709
+Target Server Version : 50628
 File Encoding         : 65001
 
-Date: 2016-10-02 20:39:16
+Date: 2016-10-03 09:17:56
 */
 
 SET FOREIGN_KEY_CHECKS=0;
@@ -26,7 +26,7 @@ CREATE TABLE `njhouse_simple_summary` (
   `new_pub_2nd_house_unit` int(8) DEFAULT NULL,
   `deal_unit` int(8) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=149 DEFAULT CHARSET=utf8;
 
 -- ----------------------------
 -- Table structure for njhouse_supply_summary
@@ -49,4 +49,19 @@ CREATE TABLE `njhouse_supply_summary` (
   `yearly_published_area` float(8,2) DEFAULT NULL,
   `yearly_published_unit` int(8) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM AUTO_INCREMENT=3 DEFAULT CHARSET=utf8;
+) ENGINE=MyISAM AUTO_INCREMENT=149 DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Table structure for njhouse_yearly_deal_stat
+-- ----------------------------
+DROP TABLE IF EXISTS `njhouse_yearly_deal_stat`;
+CREATE TABLE `njhouse_yearly_deal_stat` (
+  `id` int(8) NOT NULL AUTO_INCREMENT,
+  `update_time` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `district` varchar(255) DEFAULT NULL,
+  `category` varchar(255) DEFAULT NULL COMMENT '住宅/办公/商业/其他',
+  `type` varchar(255) DEFAULT NULL COMMENT '商品房/二手房/租赁/抵押/抵押注销',
+  `column` varchar(255) DEFAULT NULL COMMENT '列值名称',
+  `value` int(11) DEFAULT NULL COMMENT '列的值',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=25 DEFAULT CHARSET=utf8;
