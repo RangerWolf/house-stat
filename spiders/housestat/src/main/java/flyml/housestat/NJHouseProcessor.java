@@ -255,6 +255,8 @@ public class NJHouseProcessor implements PageProcessor{
 						districtNameList.add(tmp);
 				}
 				
+				
+				
 				// 获取【住宅->商品房】成交信息
 				String css = "body > table:nth-child(21) >"
 						+ " tbody > tr > td > table:nth-child(2) > tbody >"
@@ -263,7 +265,42 @@ public class NJHouseProcessor implements PageProcessor{
 				String type = "商品房";
 				String[] columns = new String[]{"可售（套）", "成交（套）"};
 				processIndex(page, css, districtNameList, category, type, columns);
+				// 获取【住宅->二手房】成交信息
+				css = "body > table:nth-child(21) > tbody > tr "
+				 		+ "> td > table:nth-child(2) > tbody > tr"
+				 		+ " > td:nth-child(3) > table td";
+				category = "住宅";
+				type = "二手房";
+				String[] columns1 = new String[]{"成交(套)", "	面积(平方米)"};
+				processIndex(page, css, districtNameList, category, type, columns1);
 				
+				// 获取【住宅->租 赁 】成交信息
+				css = "body > table:nth-child(21) > tbody > tr "
+						+ "> td > table:nth-child(2) > tbody > tr "
+						+ "> td:nth-child(4) > table td";
+				category = "住宅";
+				type = "租 赁 ";
+				String[] columns2 = new String[]{"备案(件)", "	面积(平方米)"};
+				processIndex(page, css, districtNameList, category, type, columns2);
+				
+				// 获取【住宅->抵 押 】成交信息
+				css = "body > table:nth-child(21) > tbody > tr >"
+						+ " td > table:nth-child(2) > tbody > tr >"
+						+ " td:nth-child(5) > table td";
+				category = "住宅";
+				type = "抵 押 ";
+				String[] columns3 = new String[]{"件数", "金额(万元)"};
+				processIndex(page, css, districtNameList, category, type, columns3);
+				
+				// 获取【住宅->抵押注销  】成交信息
+				css = "body > table:nth-child(21) > tbody >"
+						+ " tr > td > table:nth-child(2) > tbody > tr"
+						+ " > td:nth-child(6) > table td";
+				category = "住宅";
+				type = "抵押注销  ";
+				String[] columns4 = new String[]{"件数", "金额(万元)"};
+				processIndex(page, css, districtNameList, category, type, columns4);
+			} else if(curUrl.endsWith("fdc_show1.php?chk=2")) {
 				
 			}
 			
@@ -302,7 +339,8 @@ public class NJHouseProcessor implements PageProcessor{
 		Spider.create(processor)
 			.addUrl(new String[]{
 					"http://www.njhouse.com.cn/index_tongji.php",
-					"http://www.njhouse.com.cn/index.php"})
+					"http://www.njhouse.com.cn/index.php",
+					"http://www.njhouse.com.cn/fdc_show1.php?chk=2"})
 			.thread(1)
 			.run();
 		processor.stopDB();
