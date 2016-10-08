@@ -189,18 +189,20 @@ public class NJHouseProcessor implements PageProcessor{
 			String category, String type, String[] columns) {
 		// 获取【住宅->商品房】成交信息
 		List<String> tmpList = page.getHtml().css(css).all();
+		
 		tmpList = tmpList.subList(3, tmpList.size()); // 因为前3个空格是
-		List<Integer> valueList = Lists.newArrayList();
+		System.out.println("tmplist"+tmpList.size());
+		List<Float> valueList = Lists.newArrayList();
 		for(String name : tmpList) {
 			String tmp = Jsoup.parse(name).text().trim();
 			tmp = tmp.replace(" ", "");
 			if(StringUtils.isBlank(tmp)) {
-				valueList.add(0);
+				valueList.add(0.0f);
 			}else {
-				valueList.add(Integer.parseInt(tmp));
+				valueList.add(Float.parseFloat(tmp));
 			}
 		}
-		
+
 		// 开始组织成Model存放到DB之中
 		List<NJHouseYearlyStat> statList = Lists.newArrayList();
 		for(int i = 0; i < valueList.size();i++) {
@@ -301,7 +303,40 @@ public class NJHouseProcessor implements PageProcessor{
 				String[] columns4 = new String[]{"件数", "金额(万元)"};
 				processIndex(page, css, districtNameList, category, type, columns4);
 			} else if(curUrl.endsWith("fdc_show1.php?chk=2")) {
+				// 获取当年办公类交易情况各个区的名称
+				// 全市,玄武,秦淮,建邺,鼓楼,栖霞,雨花台,江宁,六合,浦口,溧水,高淳
+				List<String> tmpList = page.getHtml().css("body > table > tbody > tr"
+						+ " > td > table:nth-child(2)"
+						+ " > tbody > tr > td:nth-child(1) > table td").all();
+				System.out.println(tmpList.size()+"tmp");
+				// 去除标签与多余的空格
+				List<String> districtNameList = Lists.newArrayList();
+				for(String name : tmpList) {
+					String tmp = Jsoup.parse(name).text().trim();
+					tmp = tmp.replace(" ", "");
+					if(StringUtils.isNotBlank(tmp))
+						districtNameList.add(tmp);
+				}
+				System.out.println(districtNameList.size()+"districtNameList");
+				// 获取【办公类->商品房】成交信息
+				String css = "body > table > tbody > tr >"
+						+ " td > table:nth-child(2) >"
+						+ " tbody > tr > td:nth-child(2) > table td";
+				String category = "办公类";
+				String type = "商品房";
+				String[] columns = new String[]{"可售（面积）","	成交（面积）"};
+				processIndex(page, css, districtNameList, category, type, columns);
+				System.out.println("category"+category);
 				
+				// 获取【办公类->二手房】成交信息
+				css = "body > table > tbody > tr "
+						+ "> td > table:nth-child(2) > tbody >"
+						+ " tr > td:nth-child(3) > table td";
+			    category = "办公类";
+				type = "二手房";
+				String[] columns1 = new String[]{"成交（套）","面积（平方米）"};
+				processIndex(page, css, districtNameList, category, type, columns1);
+				System.out.println("category"+category);
 			}
 			
 		} catch(Exception e) {
@@ -338,8 +373,8 @@ public class NJHouseProcessor implements PageProcessor{
 		processor.startDB();
 		Spider.create(processor)
 			.addUrl(new String[]{
-					"http://www.njhouse.com.cn/index_tongji.php",
-					"http://www.njhouse.com.cn/index.php",
+//					"http://www.njhouse.com.cn/index_tongji.php",
+//					"http://www.njhouse.com.cn/index.php",
 					"http://www.njhouse.com.cn/fdc_show1.php?chk=2"})
 			.thread(1)
 			.run();
